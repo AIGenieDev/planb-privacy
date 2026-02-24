@@ -1,49 +1,101 @@
-# Privacy Policy for Plan B – Emergency AI Assistant
+Privacy Policy
 
-Effective Date: January 1, 2026
+Last updated: February 2026
 
-Plan B – Emergency AI Assistant ("Plan B", "we", "our", or "us") respects your privacy. This Privacy Policy explains how we handle information when you use our mobile application.
+Plan B (“we”, “our”, or “us”) respects your privacy. This Privacy Policy explains how we collect, use, and protect your information when you use the Plan B mobile application (the “App”).
+
+This version applies during the closed testing phase.
 
 1. Information We Collect
 
-Plan B may collect limited information necessary to operate the app, including:
+We may collect the following information:
 
-- User-provided input (questions or emergency scenarios)
-- Basic device information required for app functionality
-- Anonymous usage analytics (if enabled)
+1.1 Account Information
 
-We do not sell personal information.
+When you create an account, we collect:
 
-2. How We Use Information
+Email address
 
-Information may be used to:
+Display name (if provided)
 
-- Provide AI-generated responses
-- Improve app performance and user experience
-- Maintain app security and functionality
+Authentication data (via Supabase or Google Sign-In)
 
-3. Data Storage
+We do not collect passwords directly; authentication is handled securely by our authentication provider.
 
-User inputs may be processed through secure third-party AI services to generate responses. We do not intentionally store personal emergency data beyond what is required for app operation.
+1.2 Usage Data
 
-4. Third-Party Services
+We collect limited usage information, including:
 
-Plan B may use third-party service providers for AI processing and infrastructure. These providers process data in accordance with their own privacy policies.
+Number of credits used
 
-5. Children's Privacy
+Subscription plan type
 
-Plan B is not directed toward children under 13 years of age. We do not knowingly collect personal information from children.
+Basic interaction data (e.g., feature usage)
 
-6. Emergency Disclaimer
+This helps us improve the App and manage subscriptions.
 
-Plan B does not replace professional emergency services. In life-threatening situations, contact local emergency services immediately.
+1.3 AI Input Data
+
+When you submit a question:
+
+The content you type is sent to an AI service provider (OpenAI) to generate a response.
+
+We may store your questions and generated responses to improve performance and user experience.
+
+We do not intentionally collect sensitive personal data. Please avoid submitting confidential, medical, legal, or financial information.
+
+2. How We Use Your Information
+
+We use collected information to:
+
+Provide AI-generated decision suggestions
+
+Manage user accounts and subscriptions
+
+Track credit usage
+
+Improve performance and stability
+
+Respond to user support requests
+
+We do not sell your personal information.
+
+3. Third-Party Services
+
+Plan B uses the following third-party services:
+
+Supabase (authentication and database)
+
+OpenAI (AI response generation)
+
+Google Sign-In (optional login method)
+
+These providers process data according to their own privacy policies.
+
+4. Data Storage and Security
+
+We take reasonable measures to protect your data. However, no system can guarantee 100% security.
+
+During closed testing, data may be retained to analyze performance and improve the product.
+
+5. Data Retention
+
+We retain account and usage data as long as your account remains active or as needed for testing and improvement purposes.
+
+You may request account deletion by contacting us.
+
+6. Children’s Privacy
+
+Plan B is not intended for children under 13. We do not knowingly collect data from children.
 
 7. Changes to This Policy
 
-We may update this Privacy Policy from time to time. Updates will be posted on this page.
+We may update this Privacy Policy as the App evolves. Updates will be reflected by the “Last updated” date above.
 
 8. Contact
 
-If you have questions about this Privacy Policy, please contact:
+If you have questions, please contact:
 
 Email: silicongeni@gmail.com
+
+App name: Plan B
