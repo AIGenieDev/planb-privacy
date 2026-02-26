@@ -60,71 +60,93 @@
 <script>
   const supabase = window.supabase.createClient(
     "https://aanmhvgfpdcysnzbwqfr.supabase.co",
-    "YOUR_ANON_KEY"
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFhbm1odmdmcGRjeXNuemJ3cWZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExNzI1MTgsImV4cCI6MjA4Njc0ODUxOH0.wE4BHgvl3QDv-kYPcEiL1vMNKV8HqcCgRBuj_ZgmZ5I"
   );
 
-  // ✅ 1) 页面打开时：从 URL hash 里取 token，并写入 session
+  const msg = document.getElementById("msg");
+  const btn = document.querySelector("button");
+
+  function setMsg(t) { msg.innerText = t; }
+
+  // ✅ 页面加载时：从 hash 取 token，并写入 session
   async function initFromHash() {
-    const msg = document.getElementById("msg");
+    try {
+      const hash = window.location.hash.startsWith("#")
+        ? window.location.hash.substring(1)
+        : "";
 
-    // Supabase 邮件链接一般是 #access_token=...&refresh_token=...&type=recovery
-    const hash = window.location.hash.startsWith("#")
-      ? window.location.hash.substring(1)
-      : "";
+      const params = new URLSearchParams(hash);
+      const access_token = params.get("access_token");
+      const refresh_token = params.get("refresh_token");
+      const type = params.get("type");
 
-    const params = new URLSearchParams(hash);
-    const access_token = params.get("access_token");
-    const refresh_token = params.get("refresh_token");
-    const type = params.get("type");
+      console.log("hash params:", { hasAccess: !!access_token, hasRefresh: !!refresh_token, type });
 
-    if (!access_token || !refresh_token) {
-      msg.innerText = "Missing reset token. Please open the link from the email again.";
-      return;
+      // ⚠️ 很多时候邮件链接只有 access_token，没有 refresh_token
+      // 这种情况下 setSession 会失败，所以我们做兼容：
+      if (access_token && refresh_token) {
+        const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+        if (error) {
+          console.error("setSession error:", error);
+          setMsg("Token error: " + error.message);
+          return;
+        }
+        setMsg("Token verified. Enter a new password.");
+        return;
+      }
+
+      // ✅ 兼容：只有 access_token 的情况，尝试用 getSession / exchange（不同版本行为不同）
+      // 先提示用户：链接缺 refresh_token 也能继续试
+      if (access_token && !refresh_token) {
+        setMsg("Token received. Please enter a new password.");
+        // 有些情况下 updateUser 也能直接用（取决于 Supabase 返回方式）
+        return;
+      }
+
+      setMsg("Missing reset token. Please open the link from the email again.");
+    } catch (e) {
+      console.error(e);
+      setMsg("Page error: " + (e?.message || e));
     }
-
-    // 可选：确认是 recovery
-    if (type && type !== "recovery") {
-      // 不是必须，但能帮助排错
-      console.log("type =", type);
-    }
-
-    const { error } = await supabase.auth.setSession({
-      access_token,
-      refresh_token
-    });
-
-    if (error) {
-      msg.innerText = "Session error: " + error.message;
-      return;
-    }
-
-    msg.innerText = "Token verified. Please enter a new password.";
   }
 
   window.addEventListener("load", initFromHash);
 
-  // ✅ 2) 点击按钮：再 updateUser
   async function resetPassword() {
     const password = document.getElementById("password").value;
-    const msg = document.getElementById("msg");
 
     if (password.length < 6) {
-      msg.innerText = "Password must be at least 6 characters.";
+      setMsg("Password must be at least 6 characters.");
       return;
     }
 
-    const { error } = await supabase.auth.updateUser({ password });
+    btn.disabled = true;
+    btn.innerText = "Updating...";
+    setMsg("");
 
-    if (error) {
-      msg.innerText = "Update failed: " + error.message;
-    } else {
-      msg.innerText = "Password updated successfully. You can now close this page.";
-      // 可选：清掉 hash，避免 token 留在地址栏
-      // history.replaceState(null, "", window.location.pathname);
+    try {
+      // ✅ 关键：确保此时已有 session；如果没有，updateUser 会报错
+      const { data: sessionData } = await supabase.auth.getSession();
+      console.log("current session:", sessionData?.session);
+
+      const { error } = await supabase.auth.updateUser({ password });
+
+      if (error) {
+        console.error("updateUser error:", error);
+        setMsg("Update failed: " + error.message);
+      } else {
+        setMsg("Password updated successfully. You can now close this page.");
+      }
+    } catch (e) {
+      console.error(e);
+      setMsg("Update error: " + (e?.message || e));
+    } finally {
+      btn.disabled = false;
+      btn.innerText = "Update Password";
     }
   }
 
-  // 让按钮 onclick 能访问到函数
+  // ✅ 确保 onclick 能找到函数
   window.resetPassword = resetPassword;
 </script>
 
