@@ -41,11 +41,30 @@
       color: white;
       font-weight: bold;
       cursor: pointer;
+      transition: opacity .15s ease, transform .12s ease;
     }
-    .msg {
-      margin-top: 15px;
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.75;
+    }
+    button:active {
+      transform: scale(0.99);
+    }
+
+    /* ✅ message: 默认隐藏 + 成功/失败颜色 */
+    .msg{
+      margin-top: 14px;
       font-size: 14px;
+      line-height: 1.35;
+      min-height: 20px;
+
+      opacity: 0;
+      transform: translateY(4px);
+      transition: all .2s ease;
     }
+    .msg.show { opacity: 1; transform: translateY(0); }
+    .msg.ok { color: #17803D; }
+    .msg.err { color: #B42318; }
   </style>
 </head>
 <body>
@@ -63,12 +82,18 @@
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFhbm1odmdmcGRjeXNuemJ3cWZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExNzI1MTgsImV4cCI6MjA4Njc0ODUxOH0.wE4BHgvl3QDv-kYPcEiL1vMNKV8HqcCgRBuj_ZgmZ5I"
   );
 
-  const msg = document.getElementById("msg");
+  const msgEl = document.getElementById("msg");
   const btn = document.querySelector("button");
 
-  function setMsg(t) { msg.innerText = t; }
+  function showMsg(text, type = "") {
+    msgEl.className = "msg show " + (type === "ok" ? "ok" : type === "err" ? "err" : "");
+    msgEl.innerText = text || "";
+    if (!text) {
+      msgEl.className = "msg"; // 没内容就隐藏
+    }
+  }
 
-  // ✅ 页面加载时：从 hash 取 token，并写入 session
+  // ✅ 页面加载：读取 hash token
   async function initFromHash() {
     try {
       const hash = window.location.hash.startsWith("#")
@@ -80,33 +105,36 @@
       const refresh_token = params.get("refresh_token");
       const type = params.get("type");
 
-      console.log("hash params:", { hasAccess: !!access_token, hasRefresh: !!refresh_token, type });
+      console.log("hash params:", {
+        hasAccess: !!access_token,
+        hasRefresh: !!refresh_token,
+        type
+      });
 
-      // ⚠️ 很多时候邮件链接只有 access_token，没有 refresh_token
-      // 这种情况下 setSession 会失败，所以我们做兼容：
-      if (access_token && refresh_token) {
-        const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+      if (!access_token) {
+        showMsg("Missing reset token. Please open the link from the email again.", "err");
+        return;
+      }
+
+      // ✅ 如果有 refresh_token，就 setSession（最稳）
+      if (refresh_token) {
+        const { error } = await supabase.auth.setSession({
+          access_token,
+          refresh_token
+        });
+
         if (error) {
           console.error("setSession error:", error);
-          setMsg("Token error: " + error.message);
+          showMsg("Token error: " + error.message, "err");
           return;
         }
-        setMsg("Token verified. Enter a new password.");
-        return;
       }
 
-      // ✅ 兼容：只有 access_token 的情况，尝试用 getSession / exchange（不同版本行为不同）
-      // 先提示用户：链接缺 refresh_token 也能继续试
-      if (access_token && !refresh_token) {
-        setMsg("Token received. Please enter a new password.");
-        // 有些情况下 updateUser 也能直接用（取决于 Supabase 返回方式）
-        return;
-      }
-
-      setMsg("Missing reset token. Please open the link from the email again.");
+      // 不管有没有 refresh_token，都给用户明确提示
+      showMsg("Ready. Enter a new password and click Update.", "");
     } catch (e) {
       console.error(e);
-      setMsg("Page error: " + (e?.message || e));
+      showMsg("Page error: " + (e?.message || e), "err");
     }
   }
 
@@ -116,16 +144,17 @@
     const password = document.getElementById("password").value;
 
     if (password.length < 6) {
-      setMsg("Password must be at least 6 characters.");
+      showMsg("Password must be at least 6 characters.", "err");
       return;
     }
 
     btn.disabled = true;
+    const oldText = btn.innerText;
     btn.innerText = "Updating...";
-    setMsg("");
+    showMsg("Updating password…", "");
 
     try {
-      // ✅ 关键：确保此时已有 session；如果没有，updateUser 会报错
+      // ✅ 打印当前 session，便于排错
       const { data: sessionData } = await supabase.auth.getSession();
       console.log("current session:", sessionData?.session);
 
@@ -133,20 +162,23 @@
 
       if (error) {
         console.error("updateUser error:", error);
-        setMsg("Update failed: " + error.message);
+        showMsg("Update failed: " + error.message, "err");
       } else {
-        setMsg("Password updated successfully. You can now close this page.");
+        showMsg("✅ Password updated successfully. You can now close this page.", "ok");
+
+        // 可选：成功后把输入框清空
+        document.getElementById("password").value = "";
       }
     } catch (e) {
       console.error(e);
-      setMsg("Update error: " + (e?.message || e));
+      showMsg("Update error: " + (e?.message || e), "err");
     } finally {
       btn.disabled = false;
-      btn.innerText = "Update Password";
+      btn.innerText = oldText;
     }
   }
 
-  // ✅ 确保 onclick 能找到函数
+  // ✅ 确保 onclick 一定能找到函数
   window.resetPassword = resetPassword;
 </script>
 
