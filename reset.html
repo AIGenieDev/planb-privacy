@@ -60,9 +60,50 @@
 <script>
   const supabase = window.supabase.createClient(
     "https://aanmhvgfpdcysnzbwqfr.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFhbm1odmdmcGRjeXNuemJ3cWZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExNzI1MTgsImV4cCI6MjA4Njc0ODUxOH0.wE4BHgvl3QDv-kYPcEiL1vMNKV8HqcCgRBuj_ZgmZ5I"
+    "YOUR_ANON_KEY"
   );
 
+  // ✅ 1) 页面打开时：从 URL hash 里取 token，并写入 session
+  async function initFromHash() {
+    const msg = document.getElementById("msg");
+
+    // Supabase 邮件链接一般是 #access_token=...&refresh_token=...&type=recovery
+    const hash = window.location.hash.startsWith("#")
+      ? window.location.hash.substring(1)
+      : "";
+
+    const params = new URLSearchParams(hash);
+    const access_token = params.get("access_token");
+    const refresh_token = params.get("refresh_token");
+    const type = params.get("type");
+
+    if (!access_token || !refresh_token) {
+      msg.innerText = "Missing reset token. Please open the link from the email again.";
+      return;
+    }
+
+    // 可选：确认是 recovery
+    if (type && type !== "recovery") {
+      // 不是必须，但能帮助排错
+      console.log("type =", type);
+    }
+
+    const { error } = await supabase.auth.setSession({
+      access_token,
+      refresh_token
+    });
+
+    if (error) {
+      msg.innerText = "Session error: " + error.message;
+      return;
+    }
+
+    msg.innerText = "Token verified. Please enter a new password.";
+  }
+
+  window.addEventListener("load", initFromHash);
+
+  // ✅ 2) 点击按钮：再 updateUser
   async function resetPassword() {
     const password = document.getElementById("password").value;
     const msg = document.getElementById("msg");
@@ -72,16 +113,19 @@
       return;
     }
 
-    const { error } = await supabase.auth.updateUser({
-      password: password
-    });
+    const { error } = await supabase.auth.updateUser({ password });
 
     if (error) {
-      msg.innerText = error.message;
+      msg.innerText = "Update failed: " + error.message;
     } else {
       msg.innerText = "Password updated successfully. You can now close this page.";
+      // 可选：清掉 hash，避免 token 留在地址栏
+      // history.replaceState(null, "", window.location.pathname);
     }
   }
+
+  // 让按钮 onclick 能访问到函数
+  window.resetPassword = resetPassword;
 </script>
 
 </body>
