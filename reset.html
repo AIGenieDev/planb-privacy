@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Reset Password - Plan B</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg,#efd3e4,#d7e3fa,#f3d8c3);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+    }
+    .card {
+      background: rgba(255,255,255,0.7);
+      backdrop-filter: blur(12px);
+      padding: 30px;
+      border-radius: 18px;
+      width: 320px;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-top: 15px;
+      border-radius: 12px;
+      border: none;
+      outline: none;
+    }
+    button {
+      margin-top: 20px;
+      padding: 12px;
+      width: 100%;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(90deg,#ff5fd1,#ff8a5b,#ffc24b);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .msg {
+      margin-top: 15px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h2>Reset Password</h2>
+  <input type="password" id="password" placeholder="New password (min 6 chars)" />
+  <button onclick="resetPassword()">Update Password</button>
+  <div class="msg" id="msg"></div>
+</div>
+
+<script>
+  const supabase = window.supabase.createClient(
+    "https://aanmhvgfpdcysnzbwqfr.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFhbm1odmdmcGRjeXNuemJ3cWZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExNzI1MTgsImV4cCI6MjA4Njc0ODUxOH0.wE4BHgvl3QDv-kYPcEiL1vMNKV8HqcCgRBuj_ZgmZ5I"
+  );
+
+  async function resetPassword() {
+    const password = document.getElementById("password").value;
+    const msg = document.getElementById("msg");
+
+    if (password.length < 6) {
+      msg.innerText = "Password must be at least 6 characters.";
+      return;
+    }
+
+    const { error } = await supabase.auth.updateUser({
+      password: password
+    });
+
+    if (error) {
+      msg.innerText = error.message;
+    } else {
+      msg.innerText = "Password updated successfully. You can now close this page.";
+    }
+  }
+</script>
+
+</body>
+</html>
